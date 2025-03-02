@@ -1,1 +1,17 @@
+# Secrets
 .env
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+
+# Docker
+*.dockerfile.swp
