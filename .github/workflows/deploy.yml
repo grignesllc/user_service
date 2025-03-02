@@ -49,3 +49,4 @@ jobs:
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl set image deployment/auth-service auth-service=${{ steps.login-ecr.outputs.registry }}/auth-service:${{ github.sha }}
+
