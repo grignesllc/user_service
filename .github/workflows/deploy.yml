@@ -1,0 +1,51 @@
+name: Deploy Auth Service to EKS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to AWS ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        id: login-ecr
+
+      - name: Build Docker Image
+        run: |
+          docker build -t auth-service:${{ github.sha }} .
+          docker tag auth-service:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/auth-service:${{ github.sha }}
+          docker tag auth-service:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/auth-service:latest
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/auth-service:${{ github.sha }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/auth-service:latest
+
+      - name: Configure kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name twahirwa-eks-cluster
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/secrets.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl set image deployment/auth-service auth-service=${{ steps.login-ecr.outputs.registry }}/auth-service:${{ github.sha }}
