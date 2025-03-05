@@ -12,7 +12,7 @@ data:
         - system:nodes
 
   mapUsers: |
-    - userarn: arn:aws:iam::300137940965:root
+    - userarn: arn:aws:iam::300137940965:user/auth-service-user
       username: cluster-admin
       groups:
         - system:masters
